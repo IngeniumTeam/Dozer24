@@ -6,6 +6,7 @@
 #include <Cherry.h>
 #include <Digit.h>
 #include <Timino.h>
+#include <StepperMotor.h>
 
 #define loopTime 20
 #define defaultSpeed 230
@@ -35,6 +36,7 @@ Mecaside right(Right);
 Bluetooth bluetooth(&Serial1);
 Report report(&Serial, debugMode, 100);
 
+//Button stepperLimitSwitch(
 BlackLineSensor blackLine(A0, A1, A2);
 
 LedRGB bluetoothLed(28, 27, 26, true);
@@ -43,6 +45,9 @@ Digit digit(49, 48, 7);
 
 SingleServo singleExample(SERVO_1, 90, 0);
 DoubleServo doubleExample(SERVO_2, SERVO_3, 90, 0, 0, 90);
+
+//AccelStepper stepper1(AccelStepper::DRIVER, 0, 0);
+StepperMotor stepper1(0, 0, 0, true, true);
 
 #include "AutoPilot.h"
 
@@ -68,6 +73,10 @@ void setup ()
     singleExample.setup();
     singleExample.open();
     doubleExample.setup();
+    // Setup the stepper motors //
+    {
+      stepper1.setup();
+    }
     stop();
 #if debugMode
     Serial.println("All systems are running.");
@@ -77,6 +86,7 @@ void setup ()
 
 void loop ()
 {
+  stepper1.loop();
   report.print();
   if (bluetooth.receive())
   {
