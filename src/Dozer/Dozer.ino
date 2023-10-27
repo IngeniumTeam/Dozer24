@@ -73,10 +73,7 @@ void setup ()
     singleExample.setup();
     singleExample.open();
     doubleExample.setup();
-    // Setup the stepper motors //
-    {
-      stepper1.setup();
-    }
+    stepper1.setup();
     stop();
 #if debugMode
     Serial.println("All systems are running.");
@@ -119,12 +116,13 @@ void loop ()
         switch (bluetooth.json["keypad"].as<int>())
         {
           case 1:
-            doubleExample.open();
+            stepper1.moveTo(2000);
+            //doubleExample.open();
             break;
           case 2:
             break;
           case 3:
-            singleExample.toggle();
+            //singleExample.toggle();
             break;
           case 4:
             break;
