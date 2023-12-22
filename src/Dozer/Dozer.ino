@@ -85,13 +85,13 @@ BlackLineSensor blackLine(A0, A1, A2);
 
 LedRGB bluetoothLed(RGBA_1, RGBB_1, RGBC_1, true);
 LedRGB led2(RGBA_2, RGBB_2, RGBC_2, true);
-Digit digit(DIGITA, DIGITB, 7);
+Digit digit(DIGITB, DIGITA, 7);
 
 SingleServo singleExample(SERVO_1, 90, 0);
 DoubleServo doubleExample(SERVO_2, SERVO_3, 90, 0, 0, 90);
 
 //AccelStepper stepper1(AccelStepper::DRIVER, 0, 0);
-StepperMotor stepper1(DIR, STEP, 200, 2, LMTS_1, true); /*, LMTS_2 */
+StepperMotor stepper1(STEP, DIR, LMTS_1, false, false, 150, 2); /*, LMTS_2 */
 
 #include "AutoPilot.h"
 
@@ -102,8 +102,8 @@ void setup ()
   // Serial setup //
   {
     Serial1.begin(9600);
-#if debugMode
     Serial.begin(9600);
+#if debugMode
     Serial.println("Debug mode is on.");
     Serial.println("Serial communication is on...");
     Serial.println("Bluetooth communication is on...");
@@ -111,8 +111,6 @@ void setup ()
   }
   // Setup and stop the robot  //
   {
-    pinMode(50, OUTPUT);
-    digitalWrite(50, LOW); // The ground pin of the digit
     digit.display(estimation);
     singleExample.setup();
     singleExample.open();

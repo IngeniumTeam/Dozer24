@@ -8,34 +8,35 @@
 // Copyright (C) 2009 Mike McCauley
 // $Id: MultiStepper.pde,v 1.1 2011/01/05 01:51:01 mikem Exp mikem $
 
-#include <AccelStepper.h>
+//#include <AccelStepper.h>
+#include <StepperMotor.h>
 
-AccelStepper stepper1(AccelStepper::DRIVER, 2, 3);
+#define STEP 6
+#define DIR 23
+#define EN 24
+
+#define LMTS_1 36
+#define LMTS_2 35
+
+StepperMotor stepper1(STEP, DIR, LMTS_1, false, false, 200, 2);
+//AccelStepper stepper1(AccelStepper::DRIVER, STEP, DIR);
 //AccelStepper stepper2(AccelStepper::FULL4WIRE, 6, 7, 8, 9);
 
-const double speed = 500.0;
+const double speed = 200.0;
 const int accelTime = 2;
 
 void setup()
 {
   Serial.begin(9600);
-  pinMode(A0, INPUT_PULLUP);
-  stepper1.setMaxSpeed(speed);
-  stepper1.setAcceleration(speed / accelTime);
-  stepper1.move(-10000);
-  while (digitalRead(A0) == HIGH) {
-    stepper1.run();
-  }
-  Serial.println("stop");
-  stepper1.stop();
-  stepper1.setCurrentPosition(stepper1.currentPosition());
-  stepper1.moveTo(2000);
+  //stepper1.setMaxSpeed(speed);
+  //stepper1.setAcceleration(speed / accelTime);
+  stepper1.moveTo(-10000);
 }
 
 void loop()
 {
   //if (stepper1.distanceToGo() == 0)
   //  stepper1.moveTo(10000);
-  stepper1.run();
+  stepper1.loop();
   //stepper2.run();
 }
