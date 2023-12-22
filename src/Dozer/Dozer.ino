@@ -13,21 +13,65 @@
 #define diagonalThreshold 75
 #define debugMode false
 
-#define SERVO_1 13
-#define SERVO_2 12
-#define SERVO_3 11
+// Servo
+#define SERVO_1 7
+#define SERVO_2 8
+#define SERVO_3 9
 #define SERVO_4 10
-#define SERVO_5 9
-#define SERVO_6 8
-#define SERVO_7 7
-#define SERVO_8 6
 
-//                           left                              right                    mapping                 //
-//                 __________________________        __________________________       ____________              //
-//                 top        bottom     stby        top        bottom    stby       from       to              //
-//              _________    _________    __      _________    _________    _       _______   ______            //
-Mecanum mecanum(35, 34, 4,   39, 38, 2,   25,     36, 37, 3,   32, 33, 5,   7,      0, 1023,  0, defaultSpeed); //
-//             in1,in2,pwm  in1,in2,pwm          in1,in2,pwm, in1,in2,pwm           min,max   min,max           //
+// Relais
+#define RELAIS_1 29
+#define RELAIS_1 30
+
+// Motors
+//// 1
+#define PWMA_1 2
+#define PWMB_1 3
+#define INA1_1 50
+#define INA2_1 51
+#define INB1_1 2
+#define INB2_1 26
+#define STBY_1 21
+//// 2
+#define PWMA_2 4
+#define PWMB_2 5
+#define INA1_2 52
+#define INA2_2 53
+#define INB1_2 27
+#define INB2_2 28
+#define STBY_2 22
+
+// Stepper
+//// 1
+#define STEP 6
+#define DIR 23
+#define EN 24
+
+// LEDs RGB
+//// 1
+#define RGBA_1 42
+#define RGBB_1 37
+#define RGBC_1 38
+//// 2
+#define RGBA_2 45
+#define RGBB_2 44
+#define RGBC_2 41
+
+// Limit switch
+//// 1
+#define LMTS_1 36
+//// 2
+#define LMTS_2 35
+
+// 7 segments digit
+#define DIGITA 40
+#define DIGITB 39
+
+//                                            left                                                                right                                      mapping               //
+//                       _________________________________________________                   _________________________________________________         __________________          //
+//                       top                       bottom              stby                  top                       bottom             stby         from            to          //
+//              _______________________    _______________________    _______      _______________________    _______________________    _______     ________    _______________   //
+Mecanum mecanum(INA1_1, INA2_1, PWMA_1,    INB1_1, INB2_1, PWMB_1,    STBY_1,      INA1_2, INA2_2, PWMA_2,    INB1_2, INB2_2, PWMB_2,    STBY_2,     0, 1023,    0, defaultSpeed); //
 
 #include <Mecaside.h>
 Mecaside left(Left);
@@ -39,15 +83,15 @@ Report report(&Serial, debugMode, 100);
 //Button stepperLimitSwitch(
 BlackLineSensor blackLine(A0, A1, A2);
 
-LedRGB bluetoothLed(28, 27, 26, true);
-LedRGB led2(31, 30, 29, true);
-Digit digit(49, 48, 7);
+LedRGB bluetoothLed(RGBA_1, RGBB_1, RGBC_1, true);
+LedRGB led2(RGBA_2, RGBB_2, RGBC_2, true);
+Digit digit(DIGITA, DIGITB, 7);
 
 SingleServo singleExample(SERVO_1, 90, 0);
 DoubleServo doubleExample(SERVO_2, SERVO_3, 90, 0, 0, 90);
 
 //AccelStepper stepper1(AccelStepper::DRIVER, 0, 0);
-StepperMotor stepper1(0, 0, 0, true, true);
+StepperMotor stepper1(DIR, STEP, 200, 2, LMTS_1, true); /*, LMTS_2 */
 
 #include "AutoPilot.h"
 
