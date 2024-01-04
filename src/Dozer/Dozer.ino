@@ -11,7 +11,7 @@
 #define LOOP_TIME 10
 #define DEFAULT_SPEED 230
 #define DIAGONAL_THRESHOLD 75
-#define DEBUG false
+#define DEBUG true
 
 // Servo
 #define SERVO_1 7
@@ -247,13 +247,12 @@ void loop() {
   if (report.prob >= 10) {
     stop();
   }
-  delay(LOOP_TIME);
+  //delay(LOOP_TIME);
 }
 
 void stop() {
 #if DEBUG
-  Serial.println("stop");
-  Serial.println();
+  // Serial.println("stop");
 #endif
   mecanum.stop();
 }
