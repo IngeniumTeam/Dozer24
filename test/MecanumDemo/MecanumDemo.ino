@@ -6,7 +6,7 @@
 #define PWMB_1 3
 #define INA1_1 50
 #define INA2_1 51
-#define INB1_1 2
+#define INB1_1 25
 #define INB2_1 26
 #define STBY_1 21
 
