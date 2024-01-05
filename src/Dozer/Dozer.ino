@@ -29,7 +29,7 @@
 #define PWMB_1 3
 #define INA1_1 50
 #define INA2_1 51
-#define INB1_1 2
+#define INB1_1 25
 #define INB2_1 26
 #define STBY_1 21
 //// 2
@@ -83,7 +83,7 @@
 //                       _________________________________________________                   _________________________________________________         __________________          //
 //                       top                       bottom              stby                  top                       bottom             stby         from            to          //
 //              _______________________    _______________________    _______      _______________________    _______________________    _______     ________    _______________   //
-Mecanum mecanum(INA1_1, INA2_1, PWMA_1, INB1_1, INB2_1, PWMB_1, STBY_1, INA1_2, INA2_2, PWMA_2, INB1_2, INB2_2, PWMB_2, STBY_2, 0, 1023, 0, DEFAULT_SPEED);  //
+Mecanum mecanum(INA2_1, INA1_1, PWMA_1,    INB1_1, INB2_1, PWMB_1,    STBY_1,      INA1_2, INA2_2, PWMA_2,    INB2_2, INB1_2, PWMB_2,    STBY_2,     0, 1023,    0, DEFAULT_SPEED); //
 
 #include <Mecaside.h>
 Mecaside left(Left);
@@ -127,7 +127,7 @@ void setup() {
     singleExample.setup();
     singleExample.open();
     doubleExample.setup();
-    // stepper1.setup();
+    stepper1.setup();
     stop();
 #if DEBUG
     Serial.println("All systems are running.");
