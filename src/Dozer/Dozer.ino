@@ -9,9 +9,9 @@
 #include <StepperMotor.h>
 
 #define LOOP_TIME 10
-#define DEFAULT_SPEED 230
+#define DEFAULT_SPEED 200
 #define DIAGONAL_THRESHOLD 75
-#define DEBUG true
+#define DEBUG false
 
 // Servo
 #define SERVO_1 7
@@ -90,10 +90,9 @@ Mecaside left(Left);
 Mecaside right(Right);
 
 int sizes[NUM_VALUES] = { 1, 4, 8, 9, 9, 1, 9, 9, 1 };
-Bluetooth bluetooth(&Serial1, sizes, NUM_VALUES);
+Bluetooth bluetooth(&Serial1, sizes, NUM_VALUES, '@');
 Report report(&Serial, DEBUG, 100);
 
-//Button stepperLimitSwitch(
 BlackLineSensor blackLine(A0, A1, A2);
 
 LedRGB bluetoothLed(RGBA_1, RGBB_1, RGBC_1, true);
@@ -103,7 +102,6 @@ Digit digit(DIGITB, DIGITA, 7);
 SingleServo singleExample(SERVO_1, 90, 0);
 DoubleServo doubleExample(SERVO_2, SERVO_3, 90, 0, 0, 90);
 
-//AccelStepper stepper1(AccelStepper::DRIVER, 0, 0);
 StepperMotor stepper1(STEP, DIR, LMTS_1, false, false, 150, 2); /*, LMTS_2 */
 
 #include "AutoPilot.h"
@@ -247,7 +245,6 @@ void loop() {
   if (report.prob >= 10) {
     stop();
   }
-  //delay(LOOP_TIME);
 }
 
 void stop() {
