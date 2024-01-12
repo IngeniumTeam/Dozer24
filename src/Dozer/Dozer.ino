@@ -11,7 +11,7 @@
 #define loopTime 20
 #define defaultSpeed 230
 #define diagonalThreshold 75
-#define debugMode true
+#define debugMode false
 
 // Servo
 #define SERVO_1 7
@@ -87,10 +87,8 @@ LedRGB bluetoothLed(RGBA_1, RGBB_1, RGBC_1, true);
 LedRGB led2(RGBA_2, RGBB_2, RGBC_2, true);
 Digit digit(DIGITB, DIGITA, 7);
 
-SingleServo singleExample(SERVO_1, 90, 0);
-DoubleServo doubleExample(SERVO_2, SERVO_3, 90, 0, 0, 90);
+SingleServo servo(SERVO_1, 0, 10);
 
-//AccelStepper stepper1(AccelStepper::DRIVER, 0, 0);
 StepperMotor stepper1(STEP, DIR, LMTS_1, false, false, 150, 2); /*, LMTS_2 */
 
 #include "AutoPilot.h"
@@ -112,9 +110,8 @@ void setup ()
   // Setup and stop the robot  //
   {
     digit.display(estimation);
-    singleExample.setup();
-    singleExample.open();
-    doubleExample.setup();
+    servo.setup();
+    servo.open();
     stepper1.setup();
     stop();
 #if debugMode
@@ -148,7 +145,9 @@ void loop ()
 #if debugMode
         Serial.print("switch: "); Serial.println(bluetooth.json["switch"].as<bool>()); Serial.println();
 #endif
-        singleExample.move(bluetooth.json["switch"].as<bool>());
+        servo.move(bluetooth.json["switch"].as<bool>());
+        Serial.print("Servo");
+        Serial.println(bluetooth.json["switch"].as<bool>());
       }
       // Keypad //
       {
@@ -158,13 +157,16 @@ void loop ()
         switch (bluetooth.json["keypad"].as<int>())
         {
           case 1:
-            stepper1.moveTo(2000);
-            //doubleExample.open();
+            Serial.println("Stepper");
+            stepper1.moveTo(0);
             break;
           case 2:
+            Serial.println("Servo");
+            servo.toggle();
             break;
           case 3:
-            //singleExample.toggle();
+            stepper1.stepper.move(2000);
+            Serial.println("Stepper 1");
             break;
           case 4:
             break;
@@ -192,7 +194,7 @@ void loop ()
         Serial.print("y.r: "); Serial.println(bluetooth.json["joysticks"]["right"]["y"].as<int>()); Serial.println();
         Serial.print("x.l: "); Serial.println(bluetooth.json["joysticks"]["left"]["x"].as<int>());
         Serial.print("x.r: "); Serial.println(bluetooth.json["joysticks"]["right"]["x"].as<int>()); Serial.println(); Serial.println();
-        
+
         Serial.print("left: "); Serial.println(constrain(bluetooth.json["joysticks"]["right"]["y"].as<int>() + bluetooth.json["joysticks"]["left"]["x"].as<int>(), -1023, 1023));
         Serial.print("right: "); Serial.println(constrain(bluetooth.json["joysticks"]["right"]["y"].as<int>() + -(bluetooth.json["joysticks"]["left"]["x"].as<int>()), -1023, 1023)); Serial.println();
         Serial.print("sideway: "); Serial.println(bluetooth.json["joysticks"]["left"]["x"].as<int>());
@@ -238,7 +240,7 @@ void loop ()
   {
     stop();
   }
-  delay(loopTime);
+  //delay(loopTime);
 }
 
 void stop ()
