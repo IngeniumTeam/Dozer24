@@ -87,9 +87,9 @@ LedRGB bluetoothLed(RGBA_1, RGBB_1, RGBC_1, true);
 LedRGB led2(RGBA_2, RGBB_2, RGBC_2, true);
 Digit digit(DIGITB, DIGITA, 7);
 
-SingleServo servo(SERVO_1, 0, 10);
+SingleServo servo(SERVO_2, 0, 100);
 
-StepperMotor stepper1(STEP, DIR, LMTS_1, false, false, 150, 2); /*, LMTS_2 */
+StepperMotor stepper1(STEP, DIR, LMTS_1, false, false, LMTS_2, false, false, 150, 2);
 
 #include "AutoPilot.h"
 
@@ -146,8 +146,6 @@ void loop ()
         Serial.print("switch: "); Serial.println(bluetooth.json["switch"].as<bool>()); Serial.println();
 #endif
         servo.move(bluetooth.json["switch"].as<bool>());
-        Serial.print("Servo");
-        Serial.println(bluetooth.json["switch"].as<bool>());
       }
       // Keypad //
       {
@@ -157,16 +155,13 @@ void loop ()
         switch (bluetooth.json["keypad"].as<int>())
         {
           case 1:
-            Serial.println("Stepper");
             stepper1.moveTo(0);
             break;
           case 2:
-            Serial.println("Servo");
             servo.toggle();
             break;
           case 3:
-            stepper1.stepper.move(2000);
-            Serial.println("Stepper 1");
+            stepper1.moveTo(300);
             break;
           case 4:
             break;
@@ -213,13 +208,6 @@ void loop ()
           }
         }
       }
-      /*  // Response //
-        {
-        bluetooth.json.clear();
-        bluetooth.json["blackLine"]["pattern"] = blackLine.getPattern();
-        bluetooth.json["blackLine"]["onTheLine"] = blackLine.lastPattern == Position.Pattern.OnTheLine;
-        bluetooth.send();
-        }*/
     }
     else
     {
