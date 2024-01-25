@@ -112,7 +112,7 @@ void setup ()
     digit.display(estimation);
     servo.setup();
     servo.open();
-    stepper1.setup();
+    //stepper1.setup();
     stop();
 #if debugMode
     Serial.println("All systems are running.");
@@ -228,7 +228,6 @@ void loop ()
   {
     stop();
   }
-  //delay(loopTime);
 }
 
 void stop ()
