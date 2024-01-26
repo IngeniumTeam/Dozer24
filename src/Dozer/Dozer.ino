@@ -79,18 +79,18 @@
 
 #define NUM_VALUES 9
 
-//                                            left                                                                right                                      mapping               //
-//                       _________________________________________________                   _________________________________________________         __________________          //
-//                       top                       bottom              stby                  top                       bottom             stby         from            to          //
-//              _______________________    _______________________    _______      _______________________    _______________________    _______     ________    _______________   //
-Mecanum mecanum(INA2_1, INA1_1, PWMA_1,    INB1_1, INB2_1, PWMB_1,    STBY_1,      INA1_2, INA2_2, PWMA_2,    INB2_2, INB1_2, PWMB_2,    STBY_2,     0, 1023,    0, DEFAULT_SPEED); //
+//                                            left                                                                right                                     mapping                //
+//                       _________________________________________________                   _________________________________________________        ___________________          //
+//                       top                       bottom              stby                  top                       bottom             stby        from             to          //
+//              _______________________    _______________________    _______      _______________________    _______________________    _______     _______    ________________   //
+Mecanum mecanum(INA2_1, INA1_1, PWMA_1,    INB1_1, INB2_1, PWMB_1,    STBY_1,      INA1_2, INA2_2, PWMA_2,    INB2_2, INB1_2, PWMB_2,    STBY_2,     0, 511,    0, DEFAULT_SPEED); //
 
 #include <Mecaside.h>
-Mecaside left(Left);
-Mecaside right(Right);
+Mecaside left(Left, 255);
+Mecaside right(Right, 255);
 
 int sizes[NUM_VALUES] = { 1, 4, 8, 9, 9, 1, 9, 9, 1 };
-Bluetooth bluetooth(&Serial1, sizes, NUM_VALUES, '@');
+Bluetooth bluetooth(&Serial1, sizes, NUM_VALUES, '.');
 Report report(&Serial, DEBUG, 100);
 
 BlackLineSensor blackLine(A0, A1, A2);
@@ -102,17 +102,19 @@ Digit digit(DIGITB, DIGITA, 7);
 SingleServo singleExample(SERVO_1, 90, 0);
 DoubleServo doubleExample(SERVO_2, SERVO_3, 90, 0, 0, 90);
 
-StepperMotor stepper1(STEP, DIR, LMTS_1, false, false, 150, 2); /*, LMTS_2 */
+StepperMotor stepper1(STEP, DIR, LMTS_1, false, false, 3000, 2); /*, LMTS_2 */
 
 #include "AutoPilot.h"
 
 int estimation = 60;
+int speedStatus = 0;
 
 void setup() {
   // Serial setup //
   {
     Serial1.begin(9600);
     Serial.begin(9600);
+    Serial.println("test");
 #if DEBUG
     Serial.println("Debug mode is on.");
     Serial.println("Serial communication is on...");
@@ -169,10 +171,11 @@ void loop() {
 #endif
       switch (bluetooth.message.get(KEYPAD)) {
         case 1:
-          stepper1.moveTo(2000);
+          stepper1.moveTo(500);
           //doubleExample.open();
           break;
         case 2:
+          stepper1.moveTo(0);
           break;
         case 3:
           //singleExample.toggle();
@@ -214,7 +217,7 @@ void loop() {
       Serial.print("left: ");
       Serial.println(constrain(bluetooth.message.get(JOYSTICK_RIGHT_Y) + bluetooth.message.get(JOYSTICK_LEFT_X), 0, 512));
       Serial.print("right: ");
-      Serial.println(constrain(bluetooth.message.get(JOYSTICK_RIGHT_Y) + -(bluetooth.message.get(JOYSTICK_LEFT_X)), 0, 512));
+      Serial.println(constrain(bluetooth.message.get(JOYSTICK_RIGHT_Y) - bluetooth.message.get(JOYSTICK_LEFT_X), 0, 512));
       Serial.println();
       Serial.print("sideway: ");
       Serial.println(bluetooth.message.get(JOYSTICK_LEFT_X));
@@ -225,15 +228,37 @@ void loop() {
 #endif
       // Simple
       {
-        left.move(constrain(bluetooth.message.get(JOYSTICK_RIGHT_Y) + bluetooth.message.get(JOYSTICK_LEFT_X), 0, 512));
-        right.move(constrain(bluetooth.message.get(JOYSTICK_RIGHT_Y) + -(bluetooth.message.get(JOYSTICK_LEFT_X)), 0, 512));
+        if (bluetooth.message.get(JOYSTICK_LEFT_Y) > 255) {
+          if (speedStatus != 1) {
+            Serial.println("boost");
+            mecanum.changeSpeed(255);
+          }
+          speedStatus = 1;
+        }
+        if (bluetooth.message.get(JOYSTICK_LEFT_Y) == 255) {
+          if (speedStatus != 0) {
+            Serial.println("default");
+            mecanum.changeSpeed(DEFAULT_SPEED);
+          }
+          speedStatus = 0;
+
+        }
+        if (bluetooth.message.get(JOYSTICK_LEFT_Y) < 255) {
+          if (speedStatus != 2) {
+            Serial.println("slow");
+            mecanum.changeSpeed(100);
+          }
+          speedStatus = 2;
+        }
+        left.move(constrain(((bluetooth.message.get(JOYSTICK_RIGHT_Y) - 255) + (bluetooth.message.get(JOYSTICK_LEFT_X) - 255)) + 255, 0, 511));
+        right.move(constrain(((bluetooth.message.get(JOYSTICK_RIGHT_Y) - 255) - (bluetooth.message.get(JOYSTICK_LEFT_X) - 255)) + 255, 0, 511));
       }
       // Others
       {
-        mecanum.sideway(bluetooth.message.get(JOYSTICK_RIGHT_X));
-        if (abs(bluetooth.message.get(JOYSTICK_RIGHT_X)) > DIAGONAL_THRESHOLD && abs(bluetooth.message.get(JOYSTICK_RIGHT_Y)) > DIAGONAL_THRESHOLD) {
+        /*mecanum.sideway(bluetooth.message.get(JOYSTICK_RIGHT_X));
+          if (abs(bluetooth.message.get(JOYSTICK_RIGHT_X) - 255) > DIAGONAL_THRESHOLD && abs(bluetooth.message.get(JOYSTICK_RIGHT_Y) - 255) > DIAGONAL_THRESHOLD) {
           mecanum.diagonal(bluetooth.message.get(JOYSTICK_RIGHT_X), bluetooth.message.get(JOYSTICK_RIGHT_Y));
-        }
+          }*/
       }
     }
   } else {
