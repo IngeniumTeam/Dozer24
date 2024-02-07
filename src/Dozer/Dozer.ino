@@ -99,8 +99,7 @@ LedRGB bluetoothLed(RGBA_1, RGBB_1, RGBC_1, true);
 LedRGB led2(RGBA_2, RGBB_2, RGBC_2, true);
 Digit digit(DIGITB, DIGITA, 7);
 
-SingleServo singleExample(SERVO_1, 90, 0);
-DoubleServo doubleExample(SERVO_2, SERVO_3, 90, 0, 0, 90);
+SingleServo servo(SERVO_1, 90, 0);
 
 StepperMotor stepper1(STEP, DIR, LMTS_1, false, false, 3000, 2); /*, LMTS_2 */
 
@@ -124,9 +123,8 @@ void setup() {
   // Setup and stop the robot  //
   {
     digit.display(estimation);
-    singleExample.setup();
-    singleExample.open();
-    doubleExample.setup();
+    servo.setup();
+    servo.open();
     stepper1.setup();
     stop();
 #if DEBUG
@@ -160,7 +158,7 @@ void loop() {
       Serial.println(bluetooth.message.get(SWITCH) != 0);
       Serial.println();
 #endif
-      singleExample.move(bluetooth.message.get(SWITCH) != 0);
+      servo.move(bluetooth.message.get(SWITCH) != 0);
     }
     // Keypad //
     {
@@ -172,15 +170,17 @@ void loop() {
       switch (bluetooth.message.get(KEYPAD)) {
         case 1:
           stepper1.moveTo(500);
-          //doubleExample.open();
+          doubleExample.open();
           break;
         case 2:
+          servo.open();
           stepper1.moveTo(0);
           break;
         case 3:
-          //singleExample.toggle();
+          stepper1.moveTo(0);
           break;
         case 4:
+          servo.toggle();
           break;
         case 5:
           break;
