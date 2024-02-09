@@ -8,13 +8,13 @@
 #include <Timino.h>
 #include <StepperMotor.h>
 
-#define MIN_SPEED 100
-#define DEFAULT_SPEED 200
+#define MIN_SPEED 130
+#define DEFAULT_SPEED 180
 #define MAX_SPEED 255
 
 #define DIAGONAL_THRESHOLD 80
 
-#define DEBUG false
+#define DEBUG true
 
 // Servo
 #define SERVO_1 7
@@ -102,7 +102,7 @@ LedRGB bluetoothLed(RGBA_1, RGBB_1, RGBC_1, true);
 LedRGB led2(RGBA_2, RGBB_2, RGBC_2, true);
 Digit digit(DIGITB, DIGITA, 7);
 
-SingleServo rackServo(SERVO_1, 90, 0);
+SingleServo rackServo(SERVO_2, 130, 80);
 
 StepperMotor rackStepper(STEP, DIR, LMTS_1, false, false, 3000, 2); /*, LMTS_2 */
 
@@ -114,7 +114,6 @@ void setup() {
   {
     Serial1.begin(9600);
     Serial.begin(9600);
-    Serial.println("test");
 #if DEBUG
     Serial.println("Debug mode is on.");
     Serial.println("Serial communication is on...");
@@ -172,19 +171,19 @@ void loop() {
         case 1:
           rackStepper.moveTo(500);
           break;
-        /*case 2:
-          break;*/
+        case 2:
+          rackStepper.moveTo(515);
+          break;
         case 3:
           rackStepper.moveTo(0);
           break;
         case 4:
-          rackServo.open();
-          rackStepper.moveTo(500);
+          rackStepper.moveTo(250);
           break;
         /*case 5:
           break;*/
         case 6:
-          rackServo.toggle();
+          rackStepper.moveTo(350);
           break;
         case 7:
           rackServo.open();
@@ -253,17 +252,15 @@ void loop() {
       }
       // Simple
       {
-        //left.move(constrain(((bluetooth.message.get(JOYSTICK_RIGHT_Y) - 255) + (bluetooth.message.get(JOYSTICK_LEFT_X) - 255)) + 255, 0, 511));
-        //right.move(constrain(((bluetooth.message.get(JOYSTICK_RIGHT_Y) - 255) - (bluetooth.message.get(JOYSTICK_LEFT_X) - 255)) + 255, 0, 511));
-        left.move(constrain(bluetooth.message.get(JOYSTICK_RIGHT_Y) + bluetooth.message.get(JOYSTICK_LEFT_X), 0, 511));
-        right.move(constrain(bluetooth.message.get(JOYSTICK_RIGHT_Y) - bluetooth.message.get(JOYSTICK_LEFT_X), 0, 511));
+        left.move(constrain(((bluetooth.message.get(JOYSTICK_RIGHT_Y) - 255) + (bluetooth.message.get(JOYSTICK_LEFT_X) - 255)) + 255, 0, 511));
+        right.move(constrain(((bluetooth.message.get(JOYSTICK_RIGHT_Y) - 255) - (bluetooth.message.get(JOYSTICK_LEFT_X) - 255)) + 255, 0, 511));
       }
       // Others
       {
         mecanum.sideway(bluetooth.message.get(JOYSTICK_RIGHT_X));
-        if (abs(bluetooth.message.get(JOYSTICK_RIGHT_X) - 255) > DIAGONAL_THRESHOLD && abs(bluetooth.message.get(JOYSTICK_RIGHT_Y) - 255) > DIAGONAL_THRESHOLD) {
-          mecanum.diagonal(bluetooth.message.get(JOYSTICK_RIGHT_X), bluetooth.message.get(JOYSTICK_RIGHT_Y));
-        }
+        //if (abs(bluetooth.message.get(JOYSTICK_RIGHT_X) - 255) > DIAGONAL_THRESHOLD && abs(bluetooth.message.get(JOYSTICK_RIGHT_Y) - 255) > DIAGONAL_THRESHOLD) {
+        //  mecanum.diagonal(bluetooth.message.get(JOYSTICK_RIGHT_X), bluetooth.message.get(JOYSTICK_RIGHT_Y));
+        //}
       }
     }
   } else {
