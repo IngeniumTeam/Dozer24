@@ -8,10 +8,13 @@
 #include <Timino.h>
 #include <StepperMotor.h>
 
-#define loopTime 20
-#define defaultSpeed 230
-#define diagonalThreshold 75
-#define debugMode false
+#define MIN_SPEED 130
+#define DEFAULT_SPEED 180
+#define MAX_SPEED 255
+
+#define DIAGONAL_THRESHOLD 80
+
+#define DEBUG true
 
 // Servo
 #define SERVO_1 7
@@ -67,41 +70,52 @@
 #define DIGITA 40
 #define DIGITB 39
 
-//                                            left                                                                right                                      mapping               //
-//                       _________________________________________________                   _________________________________________________         __________________          //
-//                       top                       bottom              stby                  top                       bottom             stby         from            to          //
-//              _______________________    _______________________    _______      _______________________    _______________________    _______     ________    _______________   //
-Mecanum mecanum(INA2_1, INA1_1, PWMA_1,    INB1_1, INB2_1, PWMB_1,    STBY_1,      INA1_2, INA2_2, PWMA_2,    INB2_2, INB1_2, PWMB_2,    STBY_2,     0, 1023,    0, defaultSpeed); //
+#define SWITCH 0
+#define KEYPAD 1
+#define ESTIMATION 2
+#define JOYSTICK_LEFT_X 3
+#define JOYSTICK_LEFT_Y 4
+#define JOYSTICK_LEFT_CLCK 5
+#define JOYSTICK_RIGHT_X 6
+#define JOYSTICK_RIGHT_Y 7
+#define JOYSTICK_RIGHT_CLCK 8
+
+#define NUM_VALUES 9
+
+//                                            left                                                                right                                     mapping                //
+//                       _________________________________________________                   _________________________________________________        ___________________          //
+//                       top                       bottom              stby                  top                       bottom             stby        from             to          //
+//              _______________________    _______________________    _______      _______________________    _______________________    _______     _______    ________________   //
+Mecanum mecanum(INA2_1, INA1_1, PWMA_1,    INB1_1, INB2_1, PWMB_1,    STBY_1,      INA1_2, INA2_2, PWMA_2,    INB2_2, INB1_2, PWMB_2,    STBY_2,     0, 511,    0, DEFAULT_SPEED); //
 
 #include <Mecaside.h>
-Mecaside left(Left);
-Mecaside right(Right);
+Mecaside left(Left, 255);
+Mecaside right(Right, 255);
 
-Bluetooth bluetooth(&Serial1);
-Report report(&Serial, debugMode, 100);
+int sizes[NUM_VALUES] = { 1, 4, 8, 9, 9, 1, 9, 9, 1 };
+Bluetooth bluetooth(&Serial1, sizes, NUM_VALUES, '.');
+Report report(&Serial, DEBUG, 100);
 
-//Button stepperLimitSwitch(
 BlackLineSensor blackLine(A0, A1, A2);
 
 LedRGB bluetoothLed(RGBA_1, RGBB_1, RGBC_1, true);
 LedRGB led2(RGBA_2, RGBB_2, RGBC_2, true);
 Digit digit(DIGITB, DIGITA, 7);
 
-SingleServo servo(SERVO_2, 0, 100);
+SingleServo rackServo(SERVO_2, 130, 80);
 
-StepperMotor stepper1(STEP, DIR, LMTS_1, false, false, LMTS_2, false, false, 150, 2);
-
-#include "AutoPilot.h"
+StepperMotor rackStepper(STEP, DIR, LMTS_1, false, false, 3000, 2); /*, LMTS_2 */
+//StepperMotor stepper1(STEP, DIR, LMTS_1, false, false, LMTS_2, false, false, 150, 2);
 
 int estimation = 60;
+int speedStatus = 0;
 
-void setup ()
-{
+void setup() {
   // Serial setup //
   {
     Serial1.begin(9600);
     Serial.begin(9600);
-#if debugMode
+#if DEBUG
     Serial.println("Debug mode is on.");
     Serial.println("Serial communication is on...");
     Serial.println("Bluetooth communication is on...");
@@ -110,130 +124,160 @@ void setup ()
   // Setup and stop the robot  //
   {
     digit.display(estimation);
-    servo.setup();
-    servo.open();
-    //stepper1.setup();
+    rackServo.setup();
+    rackServo.open();
+    rackStepper.setup();
     stop();
-#if debugMode
+#if DEBUG
     Serial.println("All systems are running.");
 #endif
   }
 }
 
-void loop ()
-{
-  stepper1.loop();
+void loop() {
+  rackStepper.loop();
   report.print();
-  if (bluetooth.receive())
-  {
-    if (bluetooth.lastError == DeserializationError::Ok)
+  if (bluetooth.receive()) {
+    report.ok++;
+    report.prob = 0;
+    bluetoothLed.on(0, 0, 255);
     {
-      report.ok++;
-      report.prob = 0;
-      bluetoothLed.on(0, 0, 255);
-      {
-#if debugMode
-        Serial.print("estimation: "); Serial.println(bluetooth.json["estimation"].as<int>()); Serial.println();
+#if DEBUG
+      Serial.print("estimation: ");
+      Serial.println(bluetooth.message.get(ESTIMATION));
+      Serial.println();
 #endif
-        if (bluetooth.json["estimation"].as<int>() != -1 && bluetooth.json["estimation"].as<int>() != estimation) {
-          estimation = bluetooth.json["estimation"].as<int>();
-          digit.display(estimation);
-        }
+      if (bluetooth.message.get(ESTIMATION) != -1 && bluetooth.message.get(ESTIMATION) != estimation) {
+        estimation = bluetooth.message.get(ESTIMATION);
+        digit.display(estimation);
       }
-      // Switch //
-      {
-#if debugMode
-        Serial.print("switch: "); Serial.println(bluetooth.json["switch"].as<bool>()); Serial.println();
+    }
+    // Switch //
+    {
+#if DEBUG
+      Serial.print("switch: ");
+      Serial.println(bluetooth.message.get(SWITCH) != 0);
+      Serial.println();
 #endif
-        servo.move(bluetooth.json["switch"].as<bool>());
-      }
-      // Keypad //
-      {
-#if debugMode
-        Serial.print("key: "); Serial.println(bluetooth.json["keypad"].as<int>()); Serial.println();
+      rackServo.move(bluetooth.message.get(SWITCH) != 0);
+    }
+    // Keypad //
+    {
+#if DEBUG
+      Serial.print("key: ");
+      Serial.println(bluetooth.message.get(KEYPAD));
+      Serial.println();
 #endif
-        switch (bluetooth.json["keypad"].as<int>())
-        {
-          case 1:
-            stepper1.moveTo(0);
-            break;
-          case 2:
-            servo.toggle();
-            break;
-          case 3:
-            stepper1.moveTo(300);
-            break;
-          case 4:
-            break;
-          case 5:
-            break;
-          case 6:
-            break;
-          case 7:
-            break;
-          case 8:
-            break;
-          case 9:
-            break;
-          case 10:
-            break;
-          case 11:
-            stop();
-            break;
-        }
+      switch (bluetooth.message.get(KEYPAD)) {
+        case 1:
+          rackStepper.moveTo(500);
+          break;
+        case 2:
+          rackStepper.moveTo(515);
+          break;
+        case 3:
+          rackStepper.moveTo(0);
+          break;
+        case 4:
+          rackStepper.moveTo(250);
+          break;
+        /*case 5:
+          break;*/
+        case 6:
+          rackStepper.moveTo(350);
+          break;
+        case 7:
+          rackServo.open();
+          break;
+        /*case 8:
+          break;*/
+        case 9:
+          rackServo.close();
+          break;
+        case 10:
+          break;
+        case 11:
+          stop();
+          break;
       }
-      // Motors //
-      {
-#if debugMode
-        Serial.print("y.l: "); Serial.println(bluetooth.json["joysticks"]["left"]["y"].as<int>());
-        Serial.print("y.r: "); Serial.println(bluetooth.json["joysticks"]["right"]["y"].as<int>()); Serial.println();
-        Serial.print("x.l: "); Serial.println(bluetooth.json["joysticks"]["left"]["x"].as<int>());
-        Serial.print("x.r: "); Serial.println(bluetooth.json["joysticks"]["right"]["x"].as<int>()); Serial.println(); Serial.println();
+    }
+    // Motors //
+    {
+#if DEBUG
+      Serial.print("y.l: ");
+      Serial.println(bluetooth.message.get(JOYSTICK_LEFT_Y));
+      Serial.print("y.r: ");
+      Serial.println(bluetooth.message.get(JOYSTICK_RIGHT_Y));
+      Serial.println();
+      Serial.print("x.l: ");
+      Serial.println(bluetooth.message.get(JOYSTICK_LEFT_X));
+      Serial.print("x.r: ");
+      Serial.println(bluetooth.message.get(JOYSTICK_RIGHT_X));
+      Serial.println();
+      Serial.println();
 
-        Serial.print("left: "); Serial.println(constrain(bluetooth.json["joysticks"]["right"]["y"].as<int>() + bluetooth.json["joysticks"]["left"]["x"].as<int>(), -1023, 1023));
-        Serial.print("right: "); Serial.println(constrain(bluetooth.json["joysticks"]["right"]["y"].as<int>() + -(bluetooth.json["joysticks"]["left"]["x"].as<int>()), -1023, 1023)); Serial.println();
-        Serial.print("sideway: "); Serial.println(bluetooth.json["joysticks"]["left"]["x"].as<int>());
-        Serial.print("diagonal: "); Serial.println(bluetooth.json["joysticks"]["right"]["x"].as<int>(), bluetooth.json["joysticks"]["right"]["y"].as<int>()); Serial.println(); Serial.println();
+      Serial.print("left: ");
+      Serial.println(constrain(bluetooth.message.get(JOYSTICK_RIGHT_Y) + bluetooth.message.get(JOYSTICK_LEFT_X), 0, 512));
+      Serial.print("right: ");
+      Serial.println(constrain(bluetooth.message.get(JOYSTICK_RIGHT_Y) - bluetooth.message.get(JOYSTICK_LEFT_X), 0, 512));
+      Serial.println();
+      Serial.print("sideway: ");
+      Serial.println(bluetooth.message.get(JOYSTICK_LEFT_X));
+      Serial.print("diagonal: ");
+      Serial.println(bluetooth.message.get(JOYSTICK_RIGHT_X), bluetooth.message.get(JOYSTICK_RIGHT_Y));
+      Serial.println();
+      Serial.println();
 #endif
-        // Simple
-        {
-          left.move(constrain(bluetooth.json["joysticks"]["right"]["y"].as<int>() + bluetooth.json["joysticks"]["left"]["x"].as<int>(), -1023, 1023));
-          right.move(constrain(bluetooth.json["joysticks"]["right"]["y"].as<int>() + -(bluetooth.json["joysticks"]["left"]["x"].as<int>()), -1023, 1023));
-        }
-        // Others
-        {
-          mecanum.sideway(bluetooth.json["joysticks"]["right"]["x"].as<int>());
-          if (abs(bluetooth.json["joysticks"]["right"]["x"].as<int>()) > diagonalThreshold && abs(bluetooth.json["joysticks"]["right"]["y"].as<int>()) > diagonalThreshold) {
-            mecanum.diagonal(bluetooth.json["joysticks"]["right"]["x"].as<int>(), bluetooth.json["joysticks"]["right"]["y"].as<int>());
-          }
+      // Speed change
+      {
+        const int joystickY = bluetooth.message.get(JOYSTICK_LEFT_Y);
+        if (joystickY > 255 && speedStatus != 1) {
+#if DEBUG
+          Serial.println("boost");
+#endif
+          mecanum.setMaxSpeed(MAX_SPEED);
+          speedStatus = 1;
+        } else if (joystickY == 255 && speedStatus != 0) {
+#if DEBUG
+          Serial.println("default");
+#endif
+          mecanum.setMaxSpeed(DEFAULT_SPEED);
+          speedStatus = 0;
+        } else if (joystickY < 255 && speedStatus != 2) {
+#if DEBUG
+          Serial.println("slow");
+#endif
+          mecanum.setMaxSpeed(MIN_SPEED);
+          speedStatus = 2;
         }
       }
+      // Simple
+      {
+        left.move(constrain(((bluetooth.message.get(JOYSTICK_RIGHT_Y) - 255) + (bluetooth.message.get(JOYSTICK_LEFT_X) - 255)) + 255, 0, 511));
+        right.move(constrain(((bluetooth.message.get(JOYSTICK_RIGHT_Y) - 255) - (bluetooth.message.get(JOYSTICK_LEFT_X) - 255)) + 255, 0, 511));
+      }
+      // Others
+      {
+        mecanum.sideway(bluetooth.message.get(JOYSTICK_RIGHT_X));
+        //if (abs(bluetooth.message.get(JOYSTICK_RIGHT_X) - 255) > DIAGONAL_THRESHOLD && abs(bluetooth.message.get(JOYSTICK_RIGHT_Y) - 255) > DIAGONAL_THRESHOLD) {
+        //  mecanum.diagonal(bluetooth.message.get(JOYSTICK_RIGHT_X), bluetooth.message.get(JOYSTICK_RIGHT_Y));
+        //}
+      }
     }
-    else
-    {
-      report.inv++;
-      report.prob++;
-      bluetooth.empty();
-      bluetoothLed.on(255, 0, 0);
-    }
-  }
-  else
-  {
+  } else {
     report.ntr++;
     report.prob++;
     bluetooth.empty();
     bluetoothLed.off();
   }
-  if (report.prob >= 10)
-  {
+  if (report.prob >= 10) {
     stop();
   }
 }
 
-void stop ()
-{
-#if debugMode
-  Serial.println("stop"); Serial.println();
+void stop() {
+#if DEBUG
+  Serial.println("stop");
 #endif
   mecanum.stop();
 }
