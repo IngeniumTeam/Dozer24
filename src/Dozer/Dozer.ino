@@ -105,6 +105,7 @@ Digit digit(DIGITB, DIGITA, 7);
 SingleServo rackServo(SERVO_2, 130, 80);
 
 StepperMotor rackStepper(STEP, DIR, LMTS_1, false, false, 3000, 2); /*, LMTS_2 */
+//StepperMotor stepper1(STEP, DIR, LMTS_1, false, false, LMTS_2, false, false, 150, 2);
 
 int estimation = 60;
 int speedStatus = 0;
