@@ -14,7 +14,7 @@
 
 #define DIAGONAL_THRESHOLD 80
 
-#define DEBUG true
+#define DEBUG false
 
 // Servo
 #define SERVO_1 7
@@ -105,10 +105,10 @@ Digit digit(DIGITB, DIGITA, 7);
 SingleServo rackServo(SERVO_2, 130, 80);
 
 StepperMotor rackStepper(STEP, DIR, LMTS_1, false, false, 3000, 2); /*, LMTS_2 */
-//StepperMotor stepper1(STEP, DIR, LMTS_1, false, false, LMTS_2, false, false, 150, 2);
 
 int estimation = 60;
 int speedStatus = 0;
+int key = 0;
 
 void setup() {
   // Serial setup //
@@ -135,6 +135,7 @@ void setup() {
 }
 
 void loop() {
+  //int start = millis();
   rackStepper.loop();
   report.print();
   if (bluetooth.receive()) {
@@ -147,7 +148,7 @@ void loop() {
       Serial.println(bluetooth.message.get(ESTIMATION));
       Serial.println();
 #endif
-      if (bluetooth.message.get(ESTIMATION) != -1 && bluetooth.message.get(ESTIMATION) != estimation) {
+      if (bluetooth.message.get(ESTIMATION) != 0 && bluetooth.message.get(ESTIMATION) != estimation) {
         estimation = bluetooth.message.get(ESTIMATION);
         digit.display(estimation);
       }
@@ -168,37 +169,40 @@ void loop() {
       Serial.println(bluetooth.message.get(KEYPAD));
       Serial.println();
 #endif
-      switch (bluetooth.message.get(KEYPAD)) {
-        case 1:
-          rackStepper.moveTo(500);
-          break;
-        case 2:
-          rackStepper.moveTo(515);
-          break;
-        case 3:
-          rackStepper.moveTo(0);
-          break;
-        case 4:
-          rackStepper.moveTo(250);
-          break;
-        /*case 5:
-          break;*/
-        case 6:
-          rackStepper.moveTo(350);
-          break;
-        case 7:
-          rackServo.open();
-          break;
-        /*case 8:
-          break;*/
-        case 9:
-          rackServo.close();
-          break;
-        case 10:
-          break;
-        case 11:
-          stop();
-          break;
+      if (bluetooth.message.get(KEYPAD) != key && bluetooth.message.get(KEYPAD) != 0) {
+        key = bluetooth.message.get(KEYPAD);
+        switch (bluetooth.message.get(KEYPAD)) {
+          case 1:
+            rackStepper.moveTo(500);
+            break;
+          case 2:
+            rackStepper.moveTo(515);
+            break;
+          case 3:
+            rackStepper.moveTo(0);
+            break;
+          case 4:
+            rackStepper.moveTo(250);
+            break;
+          /*case 5:
+            break;*/
+          case 6:
+            rackStepper.moveTo(350);
+            break;
+          case 7:
+            rackServo.open();
+            break;
+          /*case 8:
+            break;*/
+          case 9:
+            rackServo.close();
+            break;
+          case 10:
+            break;
+          case 11:
+            stop();
+            break;
+        }
       }
     }
     // Motors //
@@ -217,9 +221,9 @@ void loop() {
       Serial.println();
 
       Serial.print("left: ");
-      Serial.println(constrain(bluetooth.message.get(JOYSTICK_RIGHT_Y) + bluetooth.message.get(JOYSTICK_LEFT_X), 0, 512));
+      Serial.println(constrain((-(bluetooth.message.get(JOYSTICK_RIGHT_X) - 255) + (bluetooth.message.get(JOYSTICK_LEFT_X) - 255)) + 255, 0, 512));
       Serial.print("right: ");
-      Serial.println(constrain(bluetooth.message.get(JOYSTICK_RIGHT_Y) - bluetooth.message.get(JOYSTICK_LEFT_X), 0, 512));
+      Serial.println(constrain((-(bluetooth.message.get(JOYSTICK_RIGHT_X) - 255) - (bluetooth.message.get(JOYSTICK_LEFT_X) - 255)) + 255, 0, 512));
       Serial.println();
       Serial.print("sideway: ");
       Serial.println(bluetooth.message.get(JOYSTICK_LEFT_X));
@@ -253,31 +257,31 @@ void loop() {
       }
       // Simple
       {
-        left.move(constrain(((bluetooth.message.get(JOYSTICK_RIGHT_Y) - 255) + (bluetooth.message.get(JOYSTICK_LEFT_X) - 255)) + 255, 0, 511));
-        right.move(constrain(((bluetooth.message.get(JOYSTICK_RIGHT_Y) - 255) - (bluetooth.message.get(JOYSTICK_LEFT_X) - 255)) + 255, 0, 511));
+        left.move(constrain((-(bluetooth.message.get(JOYSTICK_RIGHT_X) - 255) + (bluetooth.message.get(JOYSTICK_LEFT_X) - 255)) + 255, 0, 512));
+        right.move(constrain((-(bluetooth.message.get(JOYSTICK_RIGHT_X) - 255) - (bluetooth.message.get(JOYSTICK_LEFT_X) - 255)) + 255, 0, 512));
       }
       // Others
       {
-        mecanum.sideway(bluetooth.message.get(JOYSTICK_RIGHT_X));
-        //if (abs(bluetooth.message.get(JOYSTICK_RIGHT_X) - 255) > DIAGONAL_THRESHOLD && abs(bluetooth.message.get(JOYSTICK_RIGHT_Y) - 255) > DIAGONAL_THRESHOLD) {
-        //  mecanum.diagonal(bluetooth.message.get(JOYSTICK_RIGHT_X), bluetooth.message.get(JOYSTICK_RIGHT_Y));
-        //}
+        mecanum.sideway(bluetooth.message.get(JOYSTICK_RIGHT_Y));
+        if (abs(bluetooth.message.get(JOYSTICK_RIGHT_X) - 255) > DIAGONAL_THRESHOLD && abs(bluetooth.message.get(JOYSTICK_RIGHT_Y) - 255) > DIAGONAL_THRESHOLD) {
+          mecanum.diagonal(bluetooth.message.get(JOYSTICK_RIGHT_X), bluetooth.message.get(JOYSTICK_RIGHT_Y));
+        }
       }
     }
   } else {
     report.ntr++;
     report.prob++;
-    bluetooth.empty();
     bluetoothLed.off();
   }
   if (report.prob >= 10) {
     stop();
   }
+  //Serial.println(millis() - start);
 }
 
 void stop() {
 #if DEBUG
   Serial.println("stop");
 #endif
-  mecanum.stop();
+  //mecanum.stop();
 }
