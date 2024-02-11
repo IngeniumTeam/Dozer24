@@ -3,7 +3,7 @@
 #define NUM_VALUES 9
 
 int sizes[NUM_VALUES] = { 1, 4, 8, 9, 9, 1, 9, 9, 1 };
-Bluetooth bluetooth(&Serial1, sizes, NUM_VALUES);
+Bluetooth bluetooth(&Serial1, sizes, NUM_VALUES, '.');
 
 void setup() {
   Serial1.begin(9600);
