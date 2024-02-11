@@ -89,8 +89,8 @@
 Mecanum mecanum(INA2_1, INA1_1, PWMA_1,    INB1_1, INB2_1, PWMB_1,    STBY_1,      INA1_2, INA2_2, PWMA_2,    INB2_2, INB1_2, PWMB_2,    STBY_2,     0, 255,    0, DEFAULT_SPEED); //
 
 #include <Mecaside.h>
-Mecaside left(Left, 255);
-Mecaside right(Right, 255);
+Mecaside left(Left);
+Mecaside right(Right);
 
 int sizes[NUM_VALUES] = { 1, 4, 8, 9, 9, 1, 9, 9, 1 };
 Bluetooth bluetooth(&Serial1, sizes, NUM_VALUES, '.');
