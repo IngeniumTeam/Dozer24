@@ -86,7 +86,7 @@
 //                       _________________________________________________                   _________________________________________________        ___________________          //
 //                       top                       bottom              stby                  top                       bottom             stby        from             to          //
 //              _______________________    _______________________    _______      _______________________    _______________________    _______     _______    ________________   //
-Mecanum mecanum(INA2_1, INA1_1, PWMA_1,    INB1_1, INB2_1, PWMB_1,    STBY_1,      INA1_2, INA2_2, PWMA_2,    INB2_2, INB1_2, PWMB_2,    STBY_2,     0, 255,    0, DEFAULT_SPEED); //
+Mecanum mecanum(INA2_1, INA1_1, PWMA_1,    INB2_1, INB1_1, PWMB_1,    STBY_1,      INA1_2, INA2_2, PWMA_2,    INB2_2, INB1_2, PWMB_2,    STBY_2,     0, 255,    0, DEFAULT_SPEED); //
 
 #include <Mecaside.h>
 Mecaside left(Left);
@@ -102,7 +102,7 @@ LedRGB bluetoothLed(RGBA_1, RGBB_1, RGBC_1, true);
 LedRGB led2(RGBA_2, RGBB_2, RGBC_2, true);
 Digit digit(DIGITB, DIGITA, 7);
 
-SingleServo rackServo(SERVO_3, 100, 140);
+SingleServo rackServo(SERVO_3, 0, 30);
 
 StepperMotor rackStepper(STEP, DIR, LMTS_1, false, false, 3000, 2); /*, LMTS_2 */
 
@@ -121,12 +121,13 @@ void setup() {
     Serial.println("Bluetooth communication is on...");
 #endif
   }
-  // Setup and stop the robot  //
+  // Setup and stop the robot //
   {
     digit.display(estimation);
     rackServo.setup();
     rackServo.open();
     rackStepper.setup();
+    rackStepper.moveTo(25);
     stop();
 #if DEBUG
     Serial.println("All systems are running.");
@@ -174,13 +175,13 @@ void loop() {
           key = bluetooth.message.get(KEYPAD);
           switch (bluetooth.message.get(KEYPAD)) {
             case 1:
-              rackStepper.moveTo(500);
+              rackStepper.moveTo(25);
               break;
             case 2:
-              rackStepper.moveTo(515);
+              rackStepper.moveTo(550);
               break;
             case 3:
-              rackStepper.moveTo(0);
+              rackStepper.moveTo(500);
               break;
             case 4:
               rackStepper.moveTo(250);
@@ -188,7 +189,7 @@ void loop() {
             /*case 5:
               break;*/
             case 6:
-              rackStepper.moveTo(350);
+              rackStepper.moveTo(400);
               break;
             case 7:
               rackServo.open();
@@ -238,20 +239,20 @@ void loop() {
           const int joystickY = bluetooth.message.get(JOYSTICK_LEFT_Y);
           if (joystickY > 255 && speedStatus != 1) {
 #if DEBUG
-#endif
             Serial.println("boost");
+#endif
             mecanum.setMaxSpeed(MAX_SPEED);
             speedStatus = 1;
           } else if (joystickY == 255 && speedStatus != 0) {
 #if DEBUG
-#endif
             Serial.println("default");
+#endif
             mecanum.setMaxSpeed(DEFAULT_SPEED);
             speedStatus = 0;
           } else if (joystickY < 255 && speedStatus != 2) {
 #if DEBUG
-#endif
             Serial.println("slow");
+#endif
             mecanum.setMaxSpeed(MIN_SPEED);
             speedStatus = 2;
           }
@@ -264,9 +265,19 @@ void loop() {
         // Others
         {
           mecanum.sideway(bluetooth.message.get(JOYSTICK_RIGHT_Y) - 255);
-          if (abs(bluetooth.message.get(JOYSTICK_RIGHT_X) - 255) > DIAGONAL_THRESHOLD && abs(bluetooth.message.get(JOYSTICK_RIGHT_Y) - 255) > DIAGONAL_THRESHOLD) {
-            mecanum.diagonal(bluetooth.message.get(JOYSTICK_RIGHT_X) - 255, bluetooth.message.get(JOYSTICK_RIGHT_Y) - 255);
-          }
+          //if (abs(bluetooth.message.get(JOYSTICK_RIGHT_X) - 255) > DIAGONAL_THRESHOLD && abs(bluetooth.message.get(JOYSTICK_RIGHT_Y) - 255) > DIAGONAL_THRESHOLD) {
+            //mecanum.diagonal(bluetooth.message.get(JOYSTICK_RIGHT_X) - 255, bluetooth.message.get(JOYSTICK_RIGHT_Y) - 255);
+          //}
+        }
+      }
+      {
+#if DEBUG
+        Serial.print("brake: ");
+        Serial.println(bluetooth.message.get(JOYSTICK_LEFT_CLCK));
+        Serial.println();
+#endif
+        if (bluetooth.message.get(JOYSTICK_LEFT_CLCK) == 1) {
+          mecanum.brake();
         }
       }
       break;
