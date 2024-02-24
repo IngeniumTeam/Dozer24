@@ -127,7 +127,6 @@ void setup() {
     rackServo.setup();
     rackServo.open();
     rackStepper.setup();
-    rackStepper.moveTo(25);
     stop();
 #if DEBUG
     Serial.println("All systems are running.");
@@ -175,21 +174,21 @@ void loop() {
           key = bluetooth.message.get(KEYPAD);
           switch (bluetooth.message.get(KEYPAD)) {
             case 1:
-              rackStepper.moveTo(25);
+              rackStepper.moveTo(0);
               break;
             case 2:
               rackStepper.moveTo(550);
               break;
             case 3:
-              rackStepper.moveTo(500);
+              rackStepper.moveTo(600);
               break;
             case 4:
-              rackStepper.moveTo(250);
+              rackStepper.moveTo(230);
               break;
             /*case 5:
               break;*/
             case 6:
-              rackStepper.moveTo(400);
+              rackStepper.moveTo(370);
               break;
             case 7:
               rackServo.open();
