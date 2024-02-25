@@ -149,10 +149,10 @@ void setup() {
   }
 }
 
-void loop() {  
-  #if DEBUG
+void loop() {
+#if DEBUG
   int start = millis();
-  #endif
+#endif
   rackStepper.loop();
   report.print();
   switch (bluetooth.receive()) {
@@ -312,9 +312,9 @@ void loop() {
   if (report.prob >= 5) {
     stop();
   }
-  #if DEBUG
+#if DEBUG
   Serial.println(millis() - start);
-  #endif
+#endif
 }
 
 void stop() {
