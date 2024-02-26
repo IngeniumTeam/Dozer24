@@ -1,6 +1,5 @@
 #include <Bluetooth.h>
 #include <Mecanum.h>
-#include <Mecaside.h>
 #include <Report.h>
 #include <BlackLineSensor.h>
 #include <Led.h>
@@ -15,7 +14,7 @@
 
 #define DIAGONAL_THRESHOLD 30
 
-#define DEBUG false
+#define DEBUG true
 
 // Servo
 #define SERVO_1 7
@@ -89,6 +88,7 @@
 //              _______________________    _______________________    _______      _______________________    _______________________    _______     _______    ________________   //
 Mecanum mecanum(INA2_1, INA1_1, PWMA_1,    INB2_1, INB1_1, PWMB_1,    STBY_1,      INA1_2, INA2_2, PWMA_2,    INB2_2, INB1_2, PWMB_2,    STBY_2,     0, 255,    0, DEFAULT_SPEED); //
 
+#include <Mecaside.h>
 Mecaside left(Left);
 Mecaside right(Right);
 
@@ -154,7 +154,7 @@ void loop() {
   int start = millis();
 #endif
   rackStepper.loop();
-  report.print();
+  //report.print();
   switch (bluetooth.receive()) {
     case 0:
       report.ok++;
@@ -163,9 +163,7 @@ void loop() {
       // Estimation //
       {
 #if DEBUG
-        Serial.print("estimation: ");
-        Serial.println(bluetooth.message.get(ESTIMATION));
-        Serial.println();
+        Serial.print("estimation: "); Serial.print(bluetooth.message.get(ESTIMATION)); Serial.print(" | ");
 #endif
         if (bluetooth.message.get(ESTIMATION) != 0 && bluetooth.message.get(ESTIMATION) != estimation) {
           estimation = bluetooth.message.get(ESTIMATION);
@@ -175,9 +173,7 @@ void loop() {
       // Switch //
       {
 #if DEBUG
-        Serial.print("switch: ");
-        Serial.println(bluetooth.message.get(SWITCH) != 0);
-        Serial.println();
+        Serial.print("switch: "); Serial.print(bluetooth.message.get(SWITCH) != 0); Serial.print(" | ");
 #endif
         rackServo.move(bluetooth.message.get(SWITCH) != 0);
       }
@@ -186,19 +182,19 @@ void loop() {
         const int joystickY = bluetooth.message.get(JOYSTICK_LEFT_Y);
         if (joystickY > 255 && speedStatus != 1) {
 #if DEBUG
-          Serial.println("boost");
+          Serial.print("boost | ");
 #endif
           mecanum.setMaxSpeed(MAX_SPEED);
           speedStatus = 1;
         } else if (joystickY == 255 && speedStatus != 0) {
 #if DEBUG
-          Serial.println("default");
+          Serial.print("default | ");
 #endif
           mecanum.setMaxSpeed(DEFAULT_SPEED);
           speedStatus = 0;
         } else if (joystickY < 255 && speedStatus != 2) {
 #if DEBUG
-          Serial.println("slow");
+          Serial.print("slow | ");
 #endif
           mecanum.setMaxSpeed(MIN_SPEED);
           speedStatus = 2;
@@ -207,58 +203,37 @@ void loop() {
       // Motors //
       {
 #if DEBUG
-        Serial.print("y.l: ");
-        Serial.println(bluetooth.message.get(JOYSTICK_LEFT_Y));
-        Serial.print("y.r: ");
-        Serial.println(bluetooth.message.get(JOYSTICK_RIGHT_Y));
-        Serial.println();
-        Serial.print("x.l: ");
-        Serial.println(bluetooth.message.get(JOYSTICK_LEFT_X));
-        Serial.print("x.r: ");
-        Serial.println(bluetooth.message.get(JOYSTICK_RIGHT_X));
-        Serial.println();
-        Serial.println();
-
-        Serial.print("left: ");
-        Serial.println(constrain((-(bluetooth.message.get(JOYSTICK_RIGHT_X) - 255) + (bluetooth.message.get(JOYSTICK_LEFT_X) - 255)) + 255, 0, 512));
-        Serial.print("right: ");
-        Serial.println(constrain((-(bluetooth.message.get(JOYSTICK_RIGHT_X) - 255) - (bluetooth.message.get(JOYSTICK_LEFT_X) - 255)) + 255, 0, 512));
-        Serial.println();
-        Serial.print("sideway: ");
-        Serial.println(bluetooth.message.get(JOYSTICK_LEFT_X));
-        Serial.print("diagonal: ");
-        Serial.println(bluetooth.message.get(JOYSTICK_RIGHT_X), bluetooth.message.get(JOYSTICK_RIGHT_Y));
-        Serial.println();
-        Serial.println();
+        Serial.print("left: "); Serial.println(constrain((-(bluetooth.message.get(JOYSTICK_RIGHT_X) - 255) + (bluetooth.message.get(JOYSTICK_LEFT_X) - 255)), -255, 255)); Serial.print(" | ");
+        Serial.print("right: "); Serial.println(constrain((-(bluetooth.message.get(JOYSTICK_RIGHT_X) - 255) - (bluetooth.message.get(JOYSTICK_LEFT_X) - 255)), -255, 255)); Serial.print(" | ");
+        Serial.print("sideway: "); Serial.print(bluetooth.message.get(JOYSTICK_RIGHT_Y) - 255); Serial.print(" | ");
 #endif
         left.move(constrain((-(bluetooth.message.get(JOYSTICK_RIGHT_X) - 255) + (bluetooth.message.get(JOYSTICK_LEFT_X) - 255)), -255, 255));
         right.move(constrain((-(bluetooth.message.get(JOYSTICK_RIGHT_X) - 255) - (bluetooth.message.get(JOYSTICK_LEFT_X) - 255)), -255, 255));
         mecanum.sideway(bluetooth.message.get(JOYSTICK_RIGHT_Y) - 255);
         if (abs(bluetooth.message.get(JOYSTICK_RIGHT_X) - 255) > DIAGONAL_THRESHOLD && abs(bluetooth.message.get(JOYSTICK_RIGHT_Y) - 255) > DIAGONAL_THRESHOLD) {
+#if DEBUG
+          Serial.print("diagonal: "); Serial.print(bluetooth.message.get(JOYSTICK_RIGHT_X) - 255); Serial.print(", "); Serial.print(bluetooth.message.get(JOYSTICK_RIGHT_Y) - 255); Serial.print(" | ");
+#endif
           mecanum.diagonal(bluetooth.message.get(JOYSTICK_RIGHT_X) - 255, bluetooth.message.get(JOYSTICK_RIGHT_Y) - 255);
         }
       }
       // Brake //
       {
-#if DEBUG
-        Serial.print("brake: ");
-        Serial.println(bluetooth.message.get(JOYSTICK_LEFT_CLCK));
-        Serial.println();
-#endif
         if (bluetooth.message.get(JOYSTICK_LEFT_CLCK)) {
+#if DEBUG
+          Serial.print("brake |");
+#endif
           mecanum.brake();
         }
       }
       // Keypad //
       {
-#if DEBUG
-        Serial.print("key: ");
-        Serial.println(bluetooth.message.get(KEYPAD));
-        Serial.println();
-#endif
         if (bluetooth.message.get(KEYPAD) != key && bluetooth.message.get(KEYPAD) != 0) {
           key = bluetooth.message.get(KEYPAD);
-          switch (bluetooth.message.get(KEYPAD)) {
+#if DEBUG
+          Serial.print("key: "); Serial.print(key); Serial.print(" | ");
+#endif
+          switch (key) {
             case 1:
               stop();
               rackStepper.moveTo(0);
@@ -313,13 +288,13 @@ void loop() {
     stop();
   }
 #if DEBUG
-  Serial.println(millis() - start);
+  Serial.print("time: "); Serial.println(millis() - start);
 #endif
 }
 
 void stop() {
 #if DEBUG
-  Serial.println("stop");
+  Serial.print("stop | ");
 #endif
   mecanum.stop();
 }
