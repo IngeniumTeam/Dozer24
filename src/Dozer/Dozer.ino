@@ -14,7 +14,8 @@
 
 #define DIAGONAL_THRESHOLD 30
 
-#define DEBUG true
+#define DEBUG false
+#define TIME_DEBUG false
 
 // Servo
 #define SERVO_1 7
@@ -102,7 +103,7 @@ LedRGB bluetoothLed(RGBA_1, RGBB_1, RGBC_1, true);
 LedRGB led2(RGBA_2, RGBB_2, RGBC_2, true);
 Digit digit(DIGITB, DIGITA, 7);
 
-SingleServo rackServo(SERVO_3, 0, 30);
+SingleServo rackServo(SERVO_3, 8, 45);
 
 StepperMotor rackStepper(STEP, DIR, LMTS_1, false, false, 3000, 2); /*, LMTS_2 */
 
@@ -150,7 +151,7 @@ void setup() {
 }
 
 void loop() {
-#if DEBUG
+#if TIME_DEBUG
   int start = millis();
 #endif
   rackStepper.loop();
@@ -203,8 +204,8 @@ void loop() {
       // Motors //
       {
 #if DEBUG
-        Serial.print("left: "); Serial.println(constrain((-(bluetooth.message.get(JOYSTICK_RIGHT_X) - 255) + (bluetooth.message.get(JOYSTICK_LEFT_X) - 255)), -255, 255)); Serial.print(" | ");
-        Serial.print("right: "); Serial.println(constrain((-(bluetooth.message.get(JOYSTICK_RIGHT_X) - 255) - (bluetooth.message.get(JOYSTICK_LEFT_X) - 255)), -255, 255)); Serial.print(" | ");
+        Serial.print("left: "); Serial.print(constrain((-(bluetooth.message.get(JOYSTICK_RIGHT_X) - 255) + (bluetooth.message.get(JOYSTICK_LEFT_X) - 255)), -255, 255)); Serial.print(" | ");
+        Serial.print("right: "); Serial.print(constrain((-(bluetooth.message.get(JOYSTICK_RIGHT_X) - 255) - (bluetooth.message.get(JOYSTICK_LEFT_X) - 255)), -255, 255)); Serial.print(" | ");
         Serial.print("sideway: "); Serial.print(bluetooth.message.get(JOYSTICK_RIGHT_Y) - 255); Serial.print(" | ");
 #endif
         left.move(constrain((-(bluetooth.message.get(JOYSTICK_RIGHT_X) - 255) + (bluetooth.message.get(JOYSTICK_LEFT_X) - 255)), -255, 255));
@@ -284,11 +285,14 @@ void loop() {
       bluetoothLed.off();
       break;
   }
-  if (report.prob >= 5) {
+  if (report.prob >= 20) {
     stop();
   }
+#if TIME_DEBUG
+  Serial.print("time: "); Serial.print(millis() - start);
+#endif
 #if DEBUG
-  Serial.print("time: "); Serial.println(millis() - start);
+  Serial.println();
 #endif
 }
 
