@@ -187,13 +187,15 @@ void loop() {
 #endif
           mecanum.setMaxSpeed(MAX_SPEED);
           speedStatus = 1;
-        } else if (joystickY == 255 && speedStatus != 0) {
+        }
+        if (joystickY == 255 && speedStatus != 0) {
 #if DEBUG
           Serial.print("default | ");
 #endif
           mecanum.setMaxSpeed(DEFAULT_SPEED);
           speedStatus = 0;
-        } else if (joystickY < 255 && speedStatus != 2) {
+        }
+        if (joystickY < 255 && speedStatus != 2) {
 #if DEBUG
           Serial.print("slow | ");
 #endif
@@ -206,11 +208,11 @@ void loop() {
 #if DEBUG
         Serial.print("left: "); Serial.print(constrain((-(bluetooth.message.get(JOYSTICK_RIGHT_X) - 255) + (bluetooth.message.get(JOYSTICK_LEFT_X) - 255)), -255, 255)); Serial.print(" | ");
         Serial.print("right: "); Serial.print(constrain((-(bluetooth.message.get(JOYSTICK_RIGHT_X) - 255) - (bluetooth.message.get(JOYSTICK_LEFT_X) - 255)), -255, 255)); Serial.print(" | ");
-        Serial.print("sideway: "); Serial.print(bluetooth.message.get(JOYSTICK_RIGHT_Y) - 255); Serial.print(" | ");
+        Serial.print("sideway: "); Serial.print(constrain(bluetooth.message.get(JOYSTICK_RIGHT_Y) - 255, -255, 255)); Serial.print(" | ");
 #endif
         left.move(constrain((-(bluetooth.message.get(JOYSTICK_RIGHT_X) - 255) + (bluetooth.message.get(JOYSTICK_LEFT_X) - 255)), -255, 255));
         right.move(constrain((-(bluetooth.message.get(JOYSTICK_RIGHT_X) - 255) - (bluetooth.message.get(JOYSTICK_LEFT_X) - 255)), -255, 255));
-        mecanum.sideway(bluetooth.message.get(JOYSTICK_RIGHT_Y) - 255);
+        mecanum.sideway(constrain(bluetooth.message.get(JOYSTICK_RIGHT_Y) - 255, -255, 255));
         if (abs(bluetooth.message.get(JOYSTICK_RIGHT_X) - 255) > DIAGONAL_THRESHOLD && abs(bluetooth.message.get(JOYSTICK_RIGHT_Y) - 255) > DIAGONAL_THRESHOLD) {
 #if DEBUG
           Serial.print("diagonal: "); Serial.print(bluetooth.message.get(JOYSTICK_RIGHT_X) - 255); Serial.print(", "); Serial.print(bluetooth.message.get(JOYSTICK_RIGHT_Y) - 255); Serial.print(" | ");
