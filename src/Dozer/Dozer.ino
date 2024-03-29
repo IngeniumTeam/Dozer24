@@ -103,7 +103,8 @@ LedRGB bluetoothLed(RGBA_1, RGBB_1, RGBC_1, true);
 LedRGB led2(RGBA_2, RGBB_2, RGBC_2, true);
 Digit digit(DIGITB, DIGITA, 7);
 
-SingleServo rackServo(SERVO_3, 8, 45);
+SingleServo rackServo(SERVO_3, 8, 50);
+SingleServo solarServo(SERVO_4, 30, 110);
 
 StepperMotor rackStepper(STEP, DIR, LMTS_1, false, false, 3000, 2); /*, LMTS_2 */
 
@@ -135,7 +136,9 @@ void setup() {
     Serial.println("Estimation is on.");
 #endif
     rackServo.setup();
-    rackServo.open();
+    rackServo.close();
+    solarServo.setup();
+    solarServo.close();
 #if DEBUG
     Serial.println("Servo is on and open.");
 #endif
@@ -260,12 +263,12 @@ void loop() {
               rackStepper.moveTo(370);
               break;
             case 7:
-              rackServo.open();
+              solarServo.open();
               break;
             /*case 8:
               break;*/
             case 9:
-              rackServo.close();
+              solarServo.close();
               break;
             case 10:
               break;
