@@ -245,8 +245,6 @@ void loop() {
               rackStepper.moveTo(0);
               break;
             case 2:
-              stop();
-              rackStepper.moveTo(550);
               break;
             case 3:
               stop();
@@ -256,21 +254,28 @@ void loop() {
               stop();
               rackStepper.moveTo(230);
               break;
-            /*case 5:
-              break;*/
-            case 6:
+            case 5:
               stop();
               rackStepper.moveTo(370);
               break;
+            case 6:
+              stop();
+              solarServo.close();
+              rackStepper.moveTo(550);
+              break;
             case 7:
+              stop();
+              rackStepper.moveTo(600);
               solarServo.open();
               break;
-            /*case 8:
-              break;*/
+            case 8:
+              solarServo.open();
+              break;
             case 9:
               solarServo.close();
               break;
             case 10:
+              rackStepper.setup();
               break;
             case 11:
               stop();
