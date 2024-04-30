@@ -157,7 +157,7 @@ void loop() {
 #if TIME_DEBUG
   int start = millis();
 #endif
-  rackStepper.loop();
+  //rackStepper.loop();
   //report.print();
   switch (bluetooth.receive()) {
     case 0:
@@ -243,10 +243,15 @@ void loop() {
             case 1:
               stop();
               rackStepper.moveTo(0);
+              rackServo.open();
               break;
             case 2:
+              stop();
+              rackStepper.moveTo(230);
               break;
             case 3:
+              rackServo.close();
+              delay(500);
               stop();
               rackStepper.moveTo(600);
               break;
@@ -256,23 +261,27 @@ void loop() {
               break;
             case 5:
               stop();
-              rackStepper.moveTo(370);
+              rackStepper.moveTo(0);
               break;
             case 6:
               stop();
-              solarServo.close();
-              rackStepper.moveTo(550);
+              rackStepper.moveTo(0);
+              rackServo.open();
+              delay(500);
+              rackStepper.moveTo(600);
               break;
             case 7:
+              solarServo.close();
               stop();
-              rackStepper.moveTo(600);
-              solarServo.open();
+              rackStepper.moveTo(550);
               break;
             case 8:
               solarServo.open();
               break;
             case 9:
-              solarServo.close();
+              solarServo.open();
+              stop();
+              rackStepper.moveTo(600);
               break;
             case 10:
               rackStepper.setup();
