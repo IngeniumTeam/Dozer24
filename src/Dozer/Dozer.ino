@@ -103,7 +103,7 @@ LedRGB bluetoothLed(RGBA_1, RGBB_1, RGBC_1, true);
 LedRGB led2(RGBA_2, RGBB_2, RGBC_2, true);
 Digit digit(DIGITB, DIGITA, 7);
 
-SingleServo rackServo(SERVO_3, 8, 50);
+SingleServo rackServo(SERVO_3, 50, 8);
 SingleServo solarServo(SERVO_4, 30, 110);
 
 StepperMotor rackStepper(STEP, DIR, LMTS_1, false, false, 3000, 2); /*, LMTS_2 */
@@ -136,7 +136,7 @@ void setup() {
     Serial.println("Estimation is on.");
 #endif
     rackServo.setup();
-    rackServo.close();
+    rackServo.open();
     solarServo.setup();
     solarServo.close();
 #if DEBUG
@@ -179,7 +179,10 @@ void loop() {
 #if DEBUG
         Serial.print("switch: "); Serial.print(bluetooth.message.get(SWITCH) != 0); Serial.print(" | ");
 #endif
-        rackServo.move(bluetooth.message.get(SWITCH) != 0);
+        if (bluetooth.message.get(SWITCH) != rackServo.state) {
+          rackServo.toggle();
+        }
+        //rackServo.move(bluetooth.message.get(SWITCH) != 0);
       }
       // Speed change //
       {
@@ -216,12 +219,12 @@ void loop() {
         left.move(constrain((-(bluetooth.message.get(JOYSTICK_RIGHT_X) - 255) + (bluetooth.message.get(JOYSTICK_LEFT_X) - 255)), -255, 255));
         right.move(constrain((-(bluetooth.message.get(JOYSTICK_RIGHT_X) - 255) - (bluetooth.message.get(JOYSTICK_LEFT_X) - 255)), -255, 255));
         mecanum.sideway(constrain(bluetooth.message.get(JOYSTICK_RIGHT_Y) - 255, -255, 255));
-        if (abs(bluetooth.message.get(JOYSTICK_RIGHT_X) - 255) > DIAGONAL_THRESHOLD && abs(bluetooth.message.get(JOYSTICK_RIGHT_Y) - 255) > DIAGONAL_THRESHOLD) {
+        /*if (abs(bluetooth.message.get(JOYSTICK_RIGHT_X) - 255) > DIAGONAL_THRESHOLD && abs(bluetooth.message.get(JOYSTICK_RIGHT_Y) - 255) > DIAGONAL_THRESHOLD) {
 #if DEBUG
           Serial.print("diagonal: "); Serial.print(bluetooth.message.get(JOYSTICK_RIGHT_X) - 255); Serial.print(", "); Serial.print(bluetooth.message.get(JOYSTICK_RIGHT_Y) - 255); Serial.print(" | ");
 #endif
           mecanum.diagonal(bluetooth.message.get(JOYSTICK_RIGHT_X) - 255, bluetooth.message.get(JOYSTICK_RIGHT_Y) - 255);
-        }
+        }*/
       }
       // Brake //
       {
@@ -241,19 +244,22 @@ void loop() {
 #endif
           switch (key) {
             case 1:
+              rackServo.open();
               stop();
               rackStepper.moveTo(0);
-              rackServo.open();
               break;
             case 2:
+              rackServo.open();
+              /*rackServo.servo.write(40);
+              delay(500);
               stop();
-              rackStepper.moveTo(230);
+              rackStepper.moveTo(400);*/
               break;
             case 3:
               rackServo.close();
               delay(500);
               stop();
-              rackStepper.moveTo(600);
+              rackStepper.moveTo(500);
               break;
             case 4:
               stop();
@@ -261,7 +267,7 @@ void loop() {
               break;
             case 5:
               stop();
-              rackStepper.moveTo(0);
+              rackStepper.moveTo(600);
               break;
             case 6:
               stop();
